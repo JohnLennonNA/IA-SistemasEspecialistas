@@ -1,0 +1,17 @@
+Ver:
+	Apontar extravio se nao tiver resposta da transportadora
+	campos: transportadora, resposta transportadora
+
+	Apontar cancelamento automatico
+	campos: Item Extraviado
+
+1- A partir de 4 toneladas solicita na indústria da transportadora de coleta FOB
+2- coleta somente um caminhão de cada transportadora por indústria
+3- toda transportadora de coleta tem que ter agendamento de coleta para coletar os produtos na indústria
+4- o motorista deve conferir a quantidade de volumes da carga a ser coletada com a quantidade de volumes do manifesto
+5- para transportar a a mercadoria, a transportadora de coleta FOB deve emitir o manifesto até 1 dia útil depois da coleta
+[07:35, 6/15/2019] Lana: 6- a transportadora de coleta ao poderá emitir o CTE depois que tiver com a carga física
+[07:38, 6/15/2019] Lana: 7- se a quantidade de volumes coletados na indústria for diferente da quantidade de volumes da nas NFS, tratar como extravio
+8- se o caminhão escolhido pela transportadora não couber todos os volumes a serem coletados na indústria, transportadora deverá lançar ocorrência de atraso
+[07:44, 6/15/2019] Lana: 9- se o CTE de coleta tiver data de criação menor que a data de expedição da indústria, considerar data de expedição para calcular o prazo de coleta
+

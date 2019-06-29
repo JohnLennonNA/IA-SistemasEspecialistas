@@ -1,0 +1,1023 @@
+=SE(Gatilho="";"";
+
+SE(Atraso em D.U<0;"";
+
+1--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);
+Atraso em D.U>40
+);
+“AT ”"AT240";
+
+2--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);E(
+Atraso em D.U>20;
+Atraso em D.U<40);
+Gatilho=-2d.u 
+Prazo Original
+);
+"AT230";
+
+3--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);
+Atraso em D.U<20;
+Gatilho=-2d.u. Novo Prazo);"AT215";
+
+4--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);E(
+Atraso em D.U>20;
+Atraso em D.U<40);OU(
+Gatilho=-2d.u 
+Prazo Original;Gatilho=Prev.Embarque));"AT225";
+
+5--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);
+Atraso em D.U<20);"AT205";
+
+6--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Porta a Porta;
+Fase do Item=Fob;
+Fase do Item=Hub);
+Gatilho=-2d.u. Novo Prazo);"AT210";
+
+7--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Porta a Porta;
+Fase do Item=Fob;
+Fase do Item=Hub);
+Gatilho=-2d.u Prazo Original);"AT200";
+
+8--SE(E(
+Tipo de Venda=Loja;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Fob);
+Gatilho=Prev.Embarque);"AT205";
+
+9--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Supply;Fase do Item=Financeiro);
+Gatilho=-2d.u. Novo Prazo);"AT240";
+
+10--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro));"AT235";
+
+11--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Fob);
+Gatilho=-2d.u. Novo Prazo);"AT220";
+
+12--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Fob);OU(
+Gatilho=-2d.u Prazo Original;
+Gatilho=Prev.Embarque));"AT210";
+
+13--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Porta a Porta;Fase do Item=Hub);Gatilho=-2d.u. Novo Prazo);"AT220";
+
+14--SE(E(
+Tipo de Venda=Troca;OU(
+Fase do Item=Porta a Porta;
+Fase do Item=Hub);
+Gatilho=-2d.u Prazo Original);"AT200";
+
+15--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Financeiro;
+Fase do Item=Supply);
+Gatilho=-2d.u. Novo Prazo);"AT240";
+
+16--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Supply;
+Fase do Item=Financeiro);
+Gatilho=-2d.u Prazo Original);"AT235";
+
+17--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Financeiro;
+Fase do Item=Supply);
+Gatilho=Prev.Embarque);"AT230";
+
+
+
+18--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Fob;
+Fase do Item=Operação Fiscal);
+Gatilho=-2d.u. Novo Prazo);"AT220";
+
+19--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Operação Fiscal;
+Fase do Item=Fob));"AT210";
+
+20--SE(E(
+Tipo de Venda=Assistencia;OU(
+Fase do Item=Porta a Porta;
+Fase do Item=Hub));"AT200";""))))))))))))))))))))))
+
+-- SQL PARA ANALISE DE NOVAS REGRAS
+
+UNLOAD ('WITH oc AS (
+   SELECT
+     opor.docnum                    AS "oc",
+     opor.docdate,
+     opor.cardcode                  AS "pn",
+     por1.itemcode,
+     por1.price                     AS "valor_item",
+     por1.linetotal                 AS "valor_total_item",
+     por1.vatsum                    AS "imposto_item",
+     por1.u_transportadord          AS "transportador_oc",
+     (por1.linetotal + por1.vatsum) AS "linetotal",
+     sum(por1.linetotal)
+     OVER (
+       PARTITION BY por1.docentry ) + SUM(por1.vatsum)
+     OVER (
+       PARTITION BY por1.docentry ) AS "total_oc",
+     por1.linestatus                AS "status_item_oc"
+   FROM sap.opor
+     LEFT JOIN sap.por1
+       ON opor.docentry = por1.docentry AND por1._created_at >= ''2017-08-01''
+     LEFT JOIN sap.pdn1
+       ON pdn1.baseentry = por1.docentry AND pdn1.itemcode = por1.itemcode AND pdn1._created_at >= ''2017-08-01''
+   WHERE opor.docdate >= ''2017-08-01''
+), exsl AS (
+   SELECT
+     cd_item,
+     max(prd.saindo_de_linha_fim)                        AS saindo_de_linha_fim,
+     max(decode(respostas, ''Produto exclusivo'', 1, 0)) AS is_exclusivo
+   FROM etc.item
+     LEFT JOIN adm.b2c_prdprd prd
+       ON prd.referencia = item.cd_item
+     LEFT JOIN adm.b2c_atributo_valor att
+       ON att.b2c_prdprd = prd.id
+          AND att.id_atributo = 250
+   GROUP BY cd_item
+), zt AS (
+   SELECT
+     ticket_view.numero_pedido,
+     ticket_view.ordem_compra,
+     ticket_view.nf,
+     ticket_view.codigo_ocr2,
+     ticket_view.status_ocr,
+     ticket_view.status
+   FROM zendesk.ticket_view
+   WHERE ticket_view.created_at >= ''2017-08-01''
+         AND ticket_view.status_ocr NOT IN (''duplicada'', ''indevida'', ''closed'', ''solved'')
+         AND (ticket_view.codigo_ocr2 LIKE (''%ex%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%op%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%av%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%fl%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%fn%''))
+), kit AS (
+   SELECT
+     itt1.father,
+     itt1.code,
+     itt1.quantity,
+     oitm.suppcatnum,
+     oitm.itemname,
+     oitm.u_volumes
+   FROM sap.itt1
+     INNER JOIN sap.oitm ON oitm.itemcode = itt1.code
+), tmargem AS (
+   SELECT
+     previsto.pedido,
+     previsto.sku,
+     previsto.margem_percentual,
+     sum(previsto.margem_percentual)
+     OVER (
+       PARTITION BY previsto.pedido ) AS "margem_pedido"
+   FROM margem.previsto
+), nfs AS (
+   SELECT
+     f2nfs.pedidos,
+     f2nfs.notas,
+     f2nfs.hubs,
+     f2nfs.codigotransportadors,
+     f2nfs.totalnotas,
+     f2nfs.volumess,
+     f2nfs.pesonotas,
+     sum(f2nfs.totalnotas)
+     OVER (
+       PARTITION BY f2nfs.pedidos, f2nfs.notas ) AS "total_nota_s"
+   FROM lojaskd_dw.f2nfs
+   WHERE f2nfs._created_at >= ''2017-08-01''
+), docnfe AS (
+   SELECT DISTINCT
+     industry_invoice.invoice_id,
+     industry_invoice_product.purchase_order,
+     industry_invoice.invoice_net_weight,
+     industry_invoice.invoice_volume,
+     industry_invoice.destination_document
+   FROM documentos_fiscais.industry_invoice_product
+     LEFT JOIN documentos_fiscais.industry_invoice
+       ON industry_invoice_product.industry_invoice_id = industry_invoice.id
+   WHERE industry_invoice_product._created_at >= ''2017-08-01''
+      AND industry_invoice.destination_document in (''10979023000143'', ''10979023000305'', ''10979023000577'', ''10979023000658'', ''10979023000739'')
+), retfollow AS (
+   SELECT
+     ROW_NUMBER()
+     OVER (
+       PARTITION BY f0_.order_id, f4_.sku
+       ORDER BY f0_.id DESC )                                 AS "row",
+     f0_.created_at,
+     f0_.updated_at,
+     f0_.id,
+     f1_.name,
+     f0_.order_id,
+     f4_.sku,
+     f0_.industry_invoice_id,
+     f0_.industry_invoice_weight,
+     f0_.industry_invoice_volume,
+     f5_.industry_new_prevision,
+     f5_.rescheduling_date,
+     f5_.shipment_new_prevision,
+     f5_.delivery_new_prevision,
+     f2_.status,
+     f2_.substatus,
+     f0_.tracking_code,
+     LISTAGG(DISTINCT o7_.name || ''|'' || o6_.value, ''||'') AS observation_type_value,
+     LISTAGG(DISTINCT a9_.name || ''|'' || a8_.url, ''||'')   AS attachments_type_value
+   FROM follow.follow f0_
+     INNER JOIN follow.follow_type f1_
+       ON f0_.type = f1_.id
+     INNER JOIN follow.follow_status f2_
+       ON f0_.status = f2_.id
+     --INNER JOIN follow.follow_customer f3_
+     -- ON f0_.customer = f3_.id
+     INNER JOIN follow.follow_product f4_
+       ON f0_.product = f4_.id
+     INNER JOIN follow.follow_dates f5_
+       ON f0_.dates = f5_.id
+     LEFT JOIN follow.observation o6_
+       ON f0_.id = o6_.follow_id
+     LEFT JOIN follow.observation_type o7_
+       ON o6_.observation_type_id = o7_.id
+     LEFT JOIN follow.attachment a8_
+       ON f0_.id = a8_.follow_id
+     LEFT JOIN follow.attachment_type a9_
+       ON a8_.attachment_type_id = a9_.id
+   GROUP BY
+     f0_.created_at,
+     f0_.updated_at,
+     f0_.id,
+     f1_.name,
+     f0_.order_id,
+     f4_.sku,
+     f5_.industry_date,
+     f0_.industry_invoice_id,
+     f0_.industry_invoice_weight,
+     f0_.industry_invoice_volume,
+     f5_.industry_new_prevision,
+     f5_.scheduling_date,
+     f5_.rescheduling_date,
+     f5_.shipment_new_prevision,
+     f5_.delivery_new_prevision,
+     f2_.status,
+     f2_.substatus,
+     f0_.tracking_code
+), zt2 AS (
+   SELECT
+     row_number()
+     OVER (
+       PARTITION BY ticket_view.numero_pedido
+       ORDER BY ticket_view.id DESC )           AS "row",
+     ticket_view.numero_pedido,
+     ticket_view.codigo_ocr2,
+     MAX(ticket_view.prazo_entrega)
+     OVER (
+       PARTITION BY ticket_view.numero_pedido ) AS "prazo_entrega"
+   FROM zendesk.ticket_view
+   WHERE ticket_view.created_at >= ''2017-08-01''
+         AND ticket_view.codigo_ocr2 IN
+             (''at240'', ''at215'', ''at230'', ''at225'', ''at210'', ''at205'', ''at235'', ''at220'', ''at011'', ''at304'', ''at134'', ''at211'')
+         AND ticket_view.demanda_interna = ''oraculo''
+         AND ticket_view.type = ''incident''
+         AND CONCAT(ticket_view.status_ocr, ticket_view.status) <> ''automacaosolved''
+)
+SELECT DISTINCT
+ itempedido.pedido,
+ itempedido.status,
+ CASE
+ WHEN itempedido.filial = 1
+   THEN ''10.979.023/0001-43''
+ WHEN itempedido.filial = 3
+   THEN ''10.979.023/0003-05''
+ WHEN itempedido.filial = 4
+   THEN ''10.979.023/0005-77''
+ WHEN itempedido.filial = 5
+   THEN ''10.979.023/0006-58''
+ WHEN itempedido.filial = 6
+   THEN ''10.979.023/0007-39''
+ END                                                                           AS "cnpj_filial",
+ TO_CHAR(itempedido.data, ''DD-MM-YYYY'')                                      AS "data_pedido",
+ CASE
+ WHEN ped.canal = ''Marketplace''
+   THEN ''Marketplace''
+ WHEN ped.tipo = ''Troca'' OR ped.tipo = ''Recompra''
+   THEN ''Troca''
+ WHEN ped.tipo = ''Venda''
+   THEN ''Loja''
+ WHEN ped.tipo = ''Assistencia''
+   THEN ''Assistencia''
+ END                                                                           AS "tipo_de_venda",
+ CASE
+ WHEN marketplace_offline.realizado_captura IS NOT NULL
+   THEN ''Marketplace OFF''
+ WHEN b2c_pedprd.tipo_venda_produto IS NOT NULL
+   THEN b2c_pedprd.tipo_venda_produto
+ END                                                                           AS "Mktp",
+ marketplace_offline.realizado_captura                                         AS "data_captura_mktp_off",
+ itempedido.is_entrega_imediata,
+ itempedido.sku                                                                AS "sku adm",
+ COALESCE(kit.code, itempedido.referencia)                                     AS "sku sap",
+ CASE
+ WHEN kit.code IS NOT NULL
+   THEN itempedido.referencia
+ END                                                                           AS "sku item kit",
+ COALESCE(kit.suppcatnum, item.suppcatnum)                                     AS "ref fornecedor",
+ itempedido.produto                                                            AS "produto",
+ ROUND(itempedido.quantidade, 0)                                               AS "quantidade",
+ ROUND((COALESCE(kit.quantity, 1)) * itempedido.quantidade, 0)                 AS "quantidade_item_kit",
+ COALESCE(kit.u_volumes, itempedido.volumes)                                   AS "volumes item",
+ CASE
+ WHEN itempedido.produto ILIKE (''%Berço%'')
+   THEN ''S''
+ WHEN itempedido.produto ILIKE (''%Amament%'')
+   THEN ''S''
+ WHEN exsl.is_exclusivo = 1
+   THEN ''S''
+ END                                                                           AS "Produto_Critico",
+ CASE
+ WHEN exsl.saindo_de_linha_fim IS NOT NULL
+   THEN ''S''
+ END                                                                           AS "Produto_saindo_de_linha",
+ TO_CHAR(exsl.saindo_de_linha_fim, ''DD-MM-YYYY'')                             AS "saindo_de_linha_fim",
+ itempedido.ordem_compra,
+ CASE
+ WHEN marketplace_offline.realizado_captura IS NOT NULL
+   THEN
+     CASE
+     WHEN marketplace_offline.pv = ''376252''
+       THEN ''2028''
+     WHEN marketplace_offline.pv = ''576376''
+       THEN ''2118''
+     END
+ ELSE item.cardcode
+ END                                                                           AS "pn",
+ REPLACE(ROUND(oc.valor_item, 2), ''.'', '','')                                AS "valor_item",
+ REPLACE(ROUND(oc.imposto_item, 2), ''.'', '','')                              AS "imposto_item",
+ REPLACE(ROUND(oc.linetotal, 2), ''.'', '','')                                 AS "total_item_oc",
+ REPLACE(ROUND(oc.total_oc, 2), ''.'', '','')                                  AS "total_oc",
+ fob.valor                                                                     AS "transportador_oc",
+ oc.transportador_oc                                                           AS "destino_oc",
+ oc.status_item_oc                                                             AS "status_item_oc",
+ b2c_pedprd.path_xml_oc,
+ ocrd.notes                                                                    AS "status_fornecimento",
+ TO_CHAR(ocrd.datefrom, ''DD-MM-YYYY'')                                        AS "data_liberacao_fornecedor",
+ CASE
+ WHEN ocrd.groupnum = 88
+   THEN ''A VISTA''
+ ELSE ''A PRAZO''
+ END                                                                           AS "Cond_pagamento",
+ fluxo_caixa.status                                                            AS "status_pagamento",
+ fluxo_caixa.pagamento                                                         AS "data_pgto_oc",
+ itempedido.polo,
+ itempedido.fornecedor_marca,
+ COALESCE(retfollow.industry_invoice_id, docnfe.invoice_id)                    AS "nota_fornecedor",
+ COALESCE(retfollow.industry_invoice_weight, docnfe.invoice_net_weight)        AS "peso_nota_e",
+ COALESCE(retfollow.industry_invoice_volume, docnfe.invoice_volume)            AS "volume_nota_e",
+ retfollow.tracking_code                                                       AS "codigo_rastreio_correios",
+ itempedido.nota_fiscal,
+ hub.valor                                                                     AS "hub_saida",
+ CASE
+ WHEN
+   CASE
+   WHEN marketplace_offline.realizado_captura IS NOT NULL
+     THEN ''Marketplace OFF''
+   WHEN b2c_pedprd.tipo_venda_produto IS NOT NULL
+     THEN b2c_pedprd.tipo_venda_produto
+   END <> ''''
+   THEN ''o_proprio''
+ ELSE shipper.valor
+ END                                                                           AS "transportadora",
+ ROUND(nfs.pesonotas, 2)                                                       AS "peso_nota_s",
+ nfs.volumess                                                                  AS "volume_nota_s",
+ ROUND(nfs.total_nota_s, 2)                                                    AS "total_nota_s",
+ TO_CHAR(pedido_data.aprovacao_previsao, ''DD-MM-YYYY'')                       AS "previsao_aprovacao",
+ TO_CHAR(pedido_data.aprovacao_realizado, ''DD-MM-YYYY'')                      AS "realizado_aprovacao",
+ TO_CHAR(pedido_data.compra_previsao, ''DD-MM-YYYY'')                          AS "previsao_compra",
+ TO_CHAR(COALESCE(oc.docdate, pedido_data.compra_realizado), ''DD-MM-YYYY'')   AS "realizado_compra",
+ TO_CHAR(itempedido_data.fat_industria_previsao, ''DD-MM-YYYY'')               AS "previsao_fat_industria",
+ TO_CHAR(itempedido_data.fat_industria_realizado, ''DD-MM-YYYY'')              AS "realizado_fat_industria",
+ TO_CHAR(retfollow.rescheduling_date, ''DD-MM-YYYY'')                          AS "data_reagendamento",
+ TO_CHAR(itempedido_data.receb_digital_previsao, ''DD-MM-YYYY'')               AS "previsao_rec_digital",
+ TO_CHAR(itempedido_data.receb_digital_realizado, ''DD-MM-YYYY'')              AS "realizado_rec_digital",
+ TO_CHAR(itempedido_data.emissao_nf_previsao, ''DD-MM-YYYY'')                  AS "previsao_emissao_nf",
+ TO_CHAR(itempedido_data.emissao_nf_realizado, ''DD-MM-YYYY'')                 AS "realizado_emissao_nf",
+ TO_CHAR(itempedido_data.recebimento_fisico_previsao, ''DD-MM-YYYY'')          AS "previsao_recebimento_fisico",
+ TO_CHAR(itempedido_data.recebimento_fisico_realizado, ''DD-MM-YYYY'')         AS "realizado_recebimento_fisico",
+ TO_CHAR(itempedido_data.embarque_previsao, ''DD-MM-YYYY'')                    AS "previsao_embarque",
+ TO_CHAR(itempedido_data.embarque_realizado, ''DD-MM-YYYY'')                   AS "realizado_embarque",
+ TO_CHAR(itempedido_data.entrega_previsao, ''DD-MM-YYYY'')                     AS "previsao_entrega",
+ TO_CHAR(itempedido_data.entrega_realizado, ''DD-MM-YYYY'')                    AS "realizado_entrega",
+ TO_CHAR(pedido_data.fat_industria_previsao, ''DD-MM-YYYY'')                   AS "fat_industria_previsao_pedido",
+ TO_CHAR(pedido_data.fat_industria_realizado, ''DD-MM-YYYY'')                  AS "fat_industria_realizado_pedido",
+ TO_CHAR(pedido_data.receb_digital_previsao, ''DD-MM-YYYY'')                   AS "receb_digital_previsao_pedido",
+ TO_CHAR(pedido_data.receb_digital_realizado, ''DD-MM-YYYY'')                  AS "receb_digital_realizado_pedido",
+ TO_CHAR(pedido_data.emissao_nf_previsao, ''DD-MM-YYYY'')                      AS "emissao_nf_previsao_pedido",
+ TO_CHAR(pedido_data.emissao_nf_realizado, ''DD-MM-YYYY'')                     AS "emissao_nf_realizado_pedidoo",
+ TO_CHAR(pedido_data.receb_fisico_previsao, ''DD-MM-YYYY'')                    AS "receb_fisico_previsao_pedido",
+ TO_CHAR(pedido_data.receb_fisico_realizado, ''DD-MM-YYYY'')                   AS "receb_fisico_realizado_pedido",
+ TO_CHAR(pedido_data.embarque_previsao, ''DD-MM-YYYY'')                        AS "embarque_previsao_pedido",
+ TO_CHAR(pedido_data.embarque_realizado, ''DD-MM-YYYY'')                       AS "embarque_realizado_pedido",
+ TO_CHAR(pedido_data.entrega_previsao, ''DD-MM-YYYY'')                         AS "entrega_previsao_pedido",
+ TO_CHAR(pedido_data.entrega_realizado, ''DD-MM-YYYY'')                        AS "entrega_realizado_pedido",
+ zt2.prazo_entrega                                                             AS "data.nova_entrega_previsao_pedido",
+ TO_CHAR(retfollow.industry_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_industria",
+ TO_CHAR(retfollow.shipment_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_embarque",
+ TO_CHAR(retfollow.delivery_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_entrega",
+ retfollow.id                                                                  AS "id_follow",
+ retfollow.status                                                              AS "status_follow",
+ retfollow.substatus                                                           AS "substatus_follow",
+ retfollow.observation_type_value                                              AS "observacao",
+ retfollow.attachments_type_value                                              AS "anexo",
+ industry.login                                                                AS "email_industry",
+ fob.login                                                                     AS "email_fob",
+ hub.login                                                                     AS "email_hub",
+ shipper.login                                                                 AS "email_shipper",
+ REPLACE(ROUND(itempedido.prd_valor_real_pago, 2), ''.'', '','')               AS "total_venda_item",
+ REPLACE(ROUND(itempedido.prd_frete_real_pago, 2), ''.'', '','')               AS "total_frete_item",
+ ROUND(tmargem.margem_percentual, 2)                                           AS "margem_item",
+ ROUND(tmargem.margem_pedido, 2)                                               AS "margem_pedido",
+ ped.cliente_nome,
+ ped.cliente_cpf,
+ ped.cliente_telefone,
+ ped.cliente_celular,
+ ped.endereco_rua,
+ ped.endereco_numero,
+ ped.endereco_complemento,
+ ped.endereco_referencia_entrega,
+ ped.endereco_bairro,
+ ped.endereco_cidade,
+ ped.endereco_estado,
+ ped.endereco_cep,
+ retfollow.name,
+ COALESCE(NULLIF(b2c_view_produtos.prd_prazo_fornecedor, 0), b2c_forfor.prazo) AS "prazo_fornecedor",
+ MAX(b2c_tratra.prazo_transportadora)
+ OVER (
+   PARTITION BY b2c_tratra.id_regreg )                                         AS "prazo_transportador",
+ zt2.codigo_ocr2                                                               AS "cod_ocr_abertos"
+FROM
+ (SELECT
+    itempedido.pedido,
+    itempedido.sku,
+    itempedido.filial,
+    itempedido.data,
+    itempedido.status,
+    itempedido.is_entrega_imediata,
+    itempedido.referencia,
+    itempedido.produto,
+    itempedido.quantidade,
+    itempedido.volumes,
+    itempedido.ordem_compra,
+    itempedido.polo,
+    itempedido.fornecedor_marca,
+    itempedido.nota_fiscal,
+    itempedido.prd_valor_real_pago,
+    itempedido.prd_frete_real_pago,
+    itempedido.fornecedor_id
+  FROM itempedido
+  WHERE itempedido.data :: DATE >= ''2017-08-01''
+       AND itempedido.item_status <> ''Cancelado''
+ ) AS itempedido
+ LEFT JOIN pedido AS ped
+   ON ped.pedido = itempedido.pedido
+ LEFT JOIN exsl
+   ON itempedido.sku = exsl.cd_item
+ LEFT JOIN kit
+   ON itempedido.referencia = kit.father
+ INNER JOIN pedido_data
+   ON pedido_data.pedido = itempedido.pedido
+ INNER JOIN itempedido_data
+   ON itempedido.pedido = itempedido_data.pedido AND itempedido.sku = itempedido_data.sku
+ LEFT JOIN oc
+   ON oc.oc = itempedido.ordem_compra AND oc.itemcode = COALESCE(kit.code, itempedido.referencia)
+ LEFT JOIN financeiro.fluxo_caixa
+   ON fluxo_caixa.docsap = ''Ordem de Compra'' AND fluxo_caixa.nf = itempedido.ordem_compra
+ INNER JOIN sap.oitm item
+   ON itempedido.referencia = item.itemcode
+ INNER JOIN sap.ocrd
+   ON ocrd.cardcode = item.cardcode
+ LEFT JOIN jira.customfields
+   ON customfields.pedido_venda = concat(itempedido.pedido, ''.0'') AND customfields.issue_key LIKE (''%CANCELA%'') AND
+      customfields.produto LIKE CONCAT(CONCAT(''%'', itempedido.sku), ''%'')
+ LEFT JOIN nfs
+   ON nfs.pedidos = itempedido.pedido AND nfs.notas = itempedido.nota_fiscal
+ INNER JOIN adm.b2c_pedprd
+   ON itempedido.pedido = b2c_pedprd.id_pedped AND itempedido.sku = b2c_pedprd.id_prdprd
+      AND (b2c_pedprd.empresa_emissora = ''SBOLojasKD'' OR b2c_pedprd.empresa_emissora IS NULL OR
+           b2c_pedprd.empresa_emissora = '''')
+ LEFT JOIN etc.parceiros_acl industry
+   ON industry.pn_sap = item.cardcode AND industry.tipo IN
+                                          (''industry'', ''marketplace_industry'', ''marketplace_industry_lojaskd'', ''marketplace_offline'')
+      AND industry.pn_sap <> ''''
+ LEFT JOIN etc.parceiros_acl shipper
+   ON shipper.pn_sap = nfs.codigotransportadors AND shipper.tipo = ''shipper'' AND shipper.pn_sap <> ''''
+ LEFT JOIN etc.parceiros_acl fob
+   ON fob.pn_sap = oc.transportador_oc AND fob.tipo = ''fob''
+ LEFT JOIN etc.parceiros_acl hub
+   ON hub.pn_sap = nfs.hubs
+ LEFT JOIN etc.marketplace_offline
+   ON marketplace_offline.pedido = itempedido.pedido AND marketplace_offline.ref = itempedido.sku
+ LEFT JOIN zt
+   ON zt.numero_pedido = itempedido.pedido AND
+      (zt.ordem_compra = itempedido.ordem_compra OR zt.nf = itempedido.nota_fiscal)
+ LEFT JOIN zt2
+   ON zt2.numero_pedido = itempedido.pedido AND zt2.row = 1
+ LEFT JOIN retfollow
+   ON itempedido.pedido = retfollow.order_id AND itempedido.sku = retfollow.sku AND retfollow.row = 1
+ LEFT JOIN adm.b2c_tratra
+   ON ped.regiao_id = b2c_tratra.id_regreg
+ LEFT JOIN adm.b2c_view_produtos
+   ON itempedido.sku = b2c_view_produtos.id
+ LEFT JOIN adm.b2c_forfor
+   ON itempedido.fornecedor_id = b2c_forfor.id
+ LEFT JOIN tmargem
+   ON itempedido.pedido = tmargem.pedido AND itempedido.sku = tmargem.sku
+ LEFT JOIN docnfe
+   ON itempedido.ordem_compra = docnfe.purchase_order
+WHERE itempedido_data.entrega_realizado IS NULL
+     AND ped.fase <> ''Cancelado''
+     AND ped.fase <> ''Novo''
+     AND ped.fase <> ''Em Aprovação''
+     AND customfields.issue_key IS NULL
+     AND zt.codigo_ocr2 IS NULL;')
+TO 's3://redshift.lojaskd.com.br/temp/ORACULO_LOJASKD.csv'
+CREDENTIALS 'aws_access_key_id=AKIAIEYENQSGC2JFNWNA;aws_secret_access_key=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'
+ALLOWOVERWRITE
+GZIP
+ADDQUOTES
+
+
+UNLOAD ('WITH oc AS (
+   SELECT
+     opor.docnum                    AS "oc",
+     opor.docdate,
+     opor.cardcode                  AS "pn",
+     por1.itemcode,
+     por1.price                     AS "valor_item",
+     por1.linetotal                 AS "valor_total_item",
+     por1.vatsum                    AS "imposto_item",
+     por1.u_transportadord          AS "transportador_oc",
+     (por1.linetotal + por1.vatsum) AS "linetotal",
+     sum(por1.linetotal)
+     OVER (
+       PARTITION BY por1.docentry ) + SUM(por1.vatsum)
+     OVER (
+       PARTITION BY por1.docentry ) AS "total_oc",
+     por1.linestatus                AS "status_item_oc"
+   FROM sap.opor
+     LEFT JOIN sap.por1
+       ON opor.docentry = por1.docentry AND por1._created_at >= ''2017-08-01''
+     LEFT JOIN sap.pdn1
+       ON pdn1.baseentry = por1.docentry AND pdn1.itemcode = por1.itemcode AND pdn1._created_at >= ''2017-08-01''
+   WHERE opor.docdate >= ''2017-08-01''
+), exsl AS (
+   SELECT
+     cd_item,
+     max(prd.saindo_de_linha_fim)                        AS saindo_de_linha_fim,
+     max(decode(respostas, ''Produto exclusivo'', 1, 0)) AS is_exclusivo
+   FROM etc.item
+     LEFT JOIN adm.b2c_prdprd prd
+       ON prd.referencia = item.cd_item
+     LEFT JOIN adm.b2c_atributo_valor att
+       ON att.b2c_prdprd = prd.id
+          AND att.id_atributo = 250
+   GROUP BY cd_item
+), zt AS (
+   SELECT
+     ticket_view.numero_pedido,
+     ticket_view.ordem_compra,
+     ticket_view.nf,
+     ticket_view.codigo_ocr2,
+     ticket_view.status_ocr,
+     ticket_view.status
+   FROM zendesk.ticket_view
+   WHERE ticket_view.created_at >= ''2017-08-01''
+         AND ticket_view.status_ocr NOT IN (''duplicada'', ''indevida'', ''closed'', ''solved'')
+         AND (ticket_view.codigo_ocr2 LIKE (''%ex%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%op%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%av%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%fl%'')
+              OR ticket_view.codigo_ocr2 LIKE (''%fn%''))
+), kit AS (
+   SELECT
+     itt1.father,
+     itt1.code,
+     itt1.quantity,
+     oitm.suppcatnum,
+     oitm.itemname,
+     oitm.u_volumes
+   FROM sap.itt1
+     INNER JOIN sap.oitm ON oitm.itemcode = itt1.code
+), tmargem AS (
+   SELECT
+     previsto.pedido,
+     previsto.sku,
+     previsto.margem_percentual,
+     sum(previsto.margem_percentual)
+     OVER (
+       PARTITION BY previsto.pedido ) AS "margem_pedido"
+   FROM margem.previsto
+), nfs AS (
+   SELECT
+     f2nfs.pedidos,
+     f2nfs.notas,
+     f2nfs.hubs,
+     f2nfs.codigotransportadors,
+     f2nfs.totalnotas,
+     f2nfs.volumess,
+     f2nfs.pesonotas,
+     sum(f2nfs.totalnotas)
+     OVER (
+       PARTITION BY f2nfs.pedidos, f2nfs.notas ) AS "total_nota_s"
+   FROM lojaskd_dw.f2nfs
+   WHERE f2nfs._created_at >= ''2017-08-01''
+), docnfe AS (
+   SELECT DISTINCT
+     industry_invoice.invoice_id,
+     industry_invoice_product.purchase_order,
+     industry_invoice.invoice_net_weight,
+     industry_invoice.invoice_volume,
+     industry_invoice.destination_document
+   FROM documentos_fiscais.industry_invoice_product
+     LEFT JOIN documentos_fiscais.industry_invoice
+       ON industry_invoice_product.industry_invoice_id = industry_invoice.id
+   WHERE industry_invoice_product._created_at >= ''2017-08-01''
+      AND industry_invoice.destination_document in (''10979023000143'', ''10979023000305'', ''10979023000577'', ''10979023000658'', ''10979023000739'')
+), retfollow AS (
+   SELECT
+     ROW_NUMBER()
+     OVER (
+       PARTITION BY f0_.order_id, f4_.sku
+       ORDER BY f0_.id DESC )                                 AS "row",
+     f0_.created_at,
+     f0_.updated_at,
+     f0_.id,
+     f1_.name,
+     f0_.order_id,
+     f4_.sku,
+     f0_.industry_invoice_id,
+     f0_.industry_invoice_weight,
+     f0_.industry_invoice_volume,
+     f5_.industry_new_prevision,
+     f5_.rescheduling_date,
+     f5_.shipment_new_prevision,
+     f5_.delivery_new_prevision,
+     f2_.status,
+     f2_.substatus,
+     f0_.tracking_code,
+     LISTAGG(DISTINCT o7_.name || ''|'' || o6_.value, ''||'') AS observation_type_value,
+     LISTAGG(DISTINCT a9_.name || ''|'' || a8_.url, ''||'')   AS attachments_type_value
+   FROM follow.follow f0_
+     INNER JOIN follow.follow_type f1_
+       ON f0_.type = f1_.id
+     INNER JOIN follow.follow_status f2_
+       ON f0_.status = f2_.id
+     --INNER JOIN follow.follow_customer f3_
+     -- ON f0_.customer = f3_.id
+     INNER JOIN follow.follow_product f4_
+       ON f0_.product = f4_.id
+     INNER JOIN follow.follow_dates f5_
+       ON f0_.dates = f5_.id
+     LEFT JOIN follow.observation o6_
+       ON f0_.id = o6_.follow_id
+     LEFT JOIN follow.observation_type o7_
+       ON o6_.observation_type_id = o7_.id
+     LEFT JOIN follow.attachment a8_
+       ON f0_.id = a8_.follow_id
+     LEFT JOIN follow.attachment_type a9_
+       ON a8_.attachment_type_id = a9_.id
+   GROUP BY
+     f0_.created_at,
+     f0_.updated_at,
+     f0_.id,
+     f1_.name,
+     f0_.order_id,
+     f4_.sku,
+     f5_.industry_date,
+     f0_.industry_invoice_id,
+     f0_.industry_invoice_weight,
+     f0_.industry_invoice_volume,
+     f5_.industry_new_prevision,
+     f5_.scheduling_date,
+     f5_.rescheduling_date,
+     f5_.shipment_new_prevision,
+     f5_.delivery_new_prevision,
+     f2_.status,
+     f2_.substatus,
+     f0_.tracking_code
+), zt2 AS (
+   SELECT
+     row_number()
+     OVER (
+       PARTITION BY ticket_view.numero_pedido
+       ORDER BY ticket_view.id DESC )           AS "row",
+     ticket_view.numero_pedido,
+     ticket_view.codigo_ocr2,
+     MAX(ticket_view.prazo_entrega)
+     OVER (
+       PARTITION BY ticket_view.numero_pedido ) AS "prazo_entrega"
+   FROM zendesk.ticket_view
+   WHERE ticket_view.created_at >= ''2017-08-01''
+         AND ticket_view.codigo_ocr2 IN
+             (''at240'', ''at215'', ''at230'', ''at225'', ''at210'', ''at205'', ''at235'', ''at220'', ''at011'', ''at304'', ''at134'', ''at211'')
+         AND ticket_view.demanda_interna = ''oraculo''
+         AND ticket_view.type = ''incident''
+         AND CONCAT(ticket_view.status_ocr, ticket_view.status) <> ''automacaosolved''
+)
+SELECT DISTINCT
+ itempedido.pedido,
+ itempedido.status,
+ CASE
+ WHEN itempedido.filial = 1
+   THEN ''10.979.023/0001-43''
+ WHEN itempedido.filial = 3
+   THEN ''10.979.023/0003-05''
+ WHEN itempedido.filial = 4
+   THEN ''10.979.023/0005-77''
+ WHEN itempedido.filial = 5
+   THEN ''10.979.023/0006-58''
+ WHEN itempedido.filial = 6
+   THEN ''10.979.023/0007-39''
+ END                                                                           AS "cnpj_filial",
+ TO_CHAR(itempedido.data, ''DD-MM-YYYY'')                                      AS "data_pedido",
+ CASE
+ WHEN ped.canal = ''Marketplace''
+   THEN ''Marketplace''
+ WHEN ped.tipo = ''Troca'' OR ped.tipo = ''Recompra''
+   THEN ''Troca''
+ WHEN ped.tipo = ''Venda''
+   THEN ''Loja''
+ WHEN ped.tipo = ''Assistencia''
+   THEN ''Assistencia''
+ END                                                                           AS "tipo_de_venda",
+ CASE
+ WHEN marketplace_offline.realizado_captura IS NOT NULL
+   THEN ''Marketplace OFF''
+ WHEN b2c_pedprd.tipo_venda_produto IS NOT NULL
+   THEN b2c_pedprd.tipo_venda_produto
+ END                                                                           AS "Mktp",
+ marketplace_offline.realizado_captura                                         AS "data_captura_mktp_off",
+ itempedido.is_entrega_imediata,
+ itempedido.sku                                                                AS "sku adm",
+ COALESCE(kit.code, itempedido.referencia)                                     AS "sku sap",
+ CASE
+ WHEN kit.code IS NOT NULL
+   THEN itempedido.referencia
+ END                                                                           AS "sku item kit",
+ COALESCE(kit.suppcatnum, item.suppcatnum)                                     AS "ref fornecedor",
+ itempedido.produto                                                            AS "produto",
+ ROUND(itempedido.quantidade, 0)                                               AS "quantidade",
+ ROUND((COALESCE(kit.quantity, 1)) * itempedido.quantidade, 0)                 AS "quantidade_item_kit",
+ COALESCE(kit.u_volumes, itempedido.volumes)                                   AS "volumes item",
+ CASE
+ WHEN itempedido.produto ILIKE (''%Berço%'')
+   THEN ''S''
+ WHEN itempedido.produto ILIKE (''%Amament%'')
+   THEN ''S''
+ WHEN exsl.is_exclusivo = 1
+   THEN ''S''
+ END                                                                           AS "Produto_Critico",
+ CASE
+ WHEN exsl.saindo_de_linha_fim IS NOT NULL
+   THEN ''S''
+ END                                                                           AS "Produto_saindo_de_linha",
+ TO_CHAR(exsl.saindo_de_linha_fim, ''DD-MM-YYYY'')                             AS "saindo_de_linha_fim",
+ itempedido.ordem_compra,
+ CASE
+ WHEN marketplace_offline.realizado_captura IS NOT NULL
+   THEN
+     CASE
+     WHEN marketplace_offline.pv = ''376252''
+       THEN ''2028''
+     WHEN marketplace_offline.pv = ''576376''
+       THEN ''2118''
+     END
+ ELSE item.cardcode
+ END                                                                           AS "pn",
+ REPLACE(ROUND(oc.valor_item, 2), ''.'', '','')                                AS "valor_item",
+ REPLACE(ROUND(oc.imposto_item, 2), ''.'', '','')                              AS "imposto_item",
+ REPLACE(ROUND(oc.linetotal, 2), ''.'', '','')                                 AS "total_item_oc",
+ REPLACE(ROUND(oc.total_oc, 2), ''.'', '','')                                  AS "total_oc",
+ fob.valor                                                                     AS "transportador_oc",
+ oc.transportador_oc                                                           AS "destino_oc",
+ oc.status_item_oc                                                             AS "status_item_oc",
+ b2c_pedprd.path_xml_oc,
+ ocrd.notes                                                                    AS "status_fornecimento",
+ TO_CHAR(ocrd.datefrom, ''DD-MM-YYYY'')                                        AS "data_liberacao_fornecedor",
+ CASE
+ WHEN ocrd.groupnum = 88
+   THEN ''A VISTA''
+ ELSE ''A PRAZO''
+ END                                                                           AS "Cond_pagamento",
+ fluxo_caixa.status                                                            AS "status_pagamento",
+ fluxo_caixa.pagamento                                                         AS "data_pgto_oc",
+ itempedido.polo,
+ itempedido.fornecedor_marca,
+ COALESCE(retfollow.industry_invoice_id, docnfe.invoice_id)                    AS "nota_fornecedor",
+ COALESCE(retfollow.industry_invoice_weight, docnfe.invoice_net_weight)        AS "peso_nota_e",
+ COALESCE(retfollow.industry_invoice_volume, docnfe.invoice_volume)            AS "volume_nota_e",
+ retfollow.tracking_code                                                       AS "codigo_rastreio_correios",
+ itempedido.nota_fiscal,
+ hub.valor                                                                     AS "hub_saida",
+ CASE
+ WHEN
+   CASE
+   WHEN marketplace_offline.realizado_captura IS NOT NULL
+     THEN ''Marketplace OFF''
+   WHEN b2c_pedprd.tipo_venda_produto IS NOT NULL
+     THEN b2c_pedprd.tipo_venda_produto
+   END <> ''''
+   THEN ''o_proprio''
+ ELSE shipper.valor
+ END                                                                           AS "transportadora",
+ ROUND(nfs.pesonotas, 2)                                                       AS "peso_nota_s",
+ nfs.volumess                                                                  AS "volume_nota_s",
+ ROUND(nfs.total_nota_s, 2)                                                    AS "total_nota_s",
+ TO_CHAR(pedido_data.aprovacao_previsao, ''DD-MM-YYYY'')                       AS "previsao_aprovacao",
+ TO_CHAR(pedido_data.aprovacao_realizado, ''DD-MM-YYYY'')                      AS "realizado_aprovacao",
+ TO_CHAR(pedido_data.compra_previsao, ''DD-MM-YYYY'')                          AS "previsao_compra",
+ TO_CHAR(COALESCE(oc.docdate, pedido_data.compra_realizado), ''DD-MM-YYYY'')   AS "realizado_compra",
+ TO_CHAR(itempedido_data.fat_industria_previsao, ''DD-MM-YYYY'')               AS "previsao_fat_industria",
+ TO_CHAR(itempedido_data.fat_industria_realizado, ''DD-MM-YYYY'')              AS "realizado_fat_industria",
+ TO_CHAR(retfollow.rescheduling_date, ''DD-MM-YYYY'')                          AS "data_reagendamento",
+ TO_CHAR(itempedido_data.receb_digital_previsao, ''DD-MM-YYYY'')               AS "previsao_rec_digital",
+ TO_CHAR(itempedido_data.receb_digital_realizado, ''DD-MM-YYYY'')              AS "realizado_rec_digital",
+ TO_CHAR(itempedido_data.emissao_nf_previsao, ''DD-MM-YYYY'')                  AS "previsao_emissao_nf",
+ TO_CHAR(itempedido_data.emissao_nf_realizado, ''DD-MM-YYYY'')                 AS "realizado_emissao_nf",
+ TO_CHAR(itempedido_data.recebimento_fisico_previsao, ''DD-MM-YYYY'')          AS "previsao_recebimento_fisico",
+ TO_CHAR(itempedido_data.recebimento_fisico_realizado, ''DD-MM-YYYY'')         AS "realizado_recebimento_fisico",
+ TO_CHAR(itempedido_data.embarque_previsao, ''DD-MM-YYYY'')                    AS "previsao_embarque",
+ TO_CHAR(itempedido_data.embarque_realizado, ''DD-MM-YYYY'')                   AS "realizado_embarque",
+ TO_CHAR(itempedido_data.entrega_previsao, ''DD-MM-YYYY'')                     AS "previsao_entrega",
+ TO_CHAR(itempedido_data.entrega_realizado, ''DD-MM-YYYY'')                    AS "realizado_entrega",
+ TO_CHAR(pedido_data.fat_industria_previsao, ''DD-MM-YYYY'')                   AS "fat_industria_previsao_pedido",
+ TO_CHAR(pedido_data.fat_industria_realizado, ''DD-MM-YYYY'')                  AS "fat_industria_realizado_pedido",
+ TO_CHAR(pedido_data.receb_digital_previsao, ''DD-MM-YYYY'')                   AS "receb_digital_previsao_pedido",
+ TO_CHAR(pedido_data.receb_digital_realizado, ''DD-MM-YYYY'')                  AS "receb_digital_realizado_pedido",
+ TO_CHAR(pedido_data.emissao_nf_previsao, ''DD-MM-YYYY'')                      AS "emissao_nf_previsao_pedido",
+ TO_CHAR(pedido_data.emissao_nf_realizado, ''DD-MM-YYYY'')                     AS "emissao_nf_realizado_pedidoo",
+ TO_CHAR(pedido_data.receb_fisico_previsao, ''DD-MM-YYYY'')                    AS "receb_fisico_previsao_pedido",
+ TO_CHAR(pedido_data.receb_fisico_realizado, ''DD-MM-YYYY'')                   AS "receb_fisico_realizado_pedido",
+ TO_CHAR(pedido_data.embarque_previsao, ''DD-MM-YYYY'')                        AS "embarque_previsao_pedido",
+ TO_CHAR(pedido_data.embarque_realizado, ''DD-MM-YYYY'')                       AS "embarque_realizado_pedido",
+ TO_CHAR(pedido_data.entrega_previsao, ''DD-MM-YYYY'')                         AS "entrega_previsao_pedido",
+ TO_CHAR(pedido_data.entrega_realizado, ''DD-MM-YYYY'')                        AS "entrega_realizado_pedido",
+ zt2.prazo_entrega                                                             AS "data.nova_entrega_previsao_pedido",
+ TO_CHAR(retfollow.industry_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_industria",
+ TO_CHAR(retfollow.shipment_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_embarque",
+ TO_CHAR(retfollow.delivery_new_prevision, ''DD-MM-YYYY'')                     AS "nova_previsao_entrega",
+ retfollow.id                                                                  AS "id_follow",
+ retfollow.status                                                              AS "status_follow",
+ retfollow.substatus                                                           AS "substatus_follow",
+ retfollow.observation_type_value                                              AS "observacao",
+ retfollow.attachments_type_value                                              AS "anexo",
+ industry.login                                                                AS "email_industry",
+ fob.login                                                                     AS "email_fob",
+ hub.login                                                                     AS "email_hub",
+ shipper.login                                                                 AS "email_shipper",
+ REPLACE(ROUND(itempedido.prd_valor_real_pago, 2), ''.'', '','')               AS "total_venda_item",
+ REPLACE(ROUND(itempedido.prd_frete_real_pago, 2), ''.'', '','')               AS "total_frete_item",
+ ROUND(tmargem.margem_percentual, 2)                                           AS "margem_item",
+ ROUND(tmargem.margem_pedido, 2)                                               AS "margem_pedido",
+ ped.cliente_nome,
+ ped.cliente_cpf,
+ ped.cliente_telefone,
+ ped.cliente_celular,
+ ped.endereco_rua,
+ ped.endereco_numero,
+ ped.endereco_complemento,
+ ped.endereco_referencia_entrega,
+ ped.endereco_bairro,
+ ped.endereco_cidade,
+ ped.endereco_estado,
+ ped.endereco_cep,
+ retfollow.name,
+ COALESCE(NULLIF(b2c_view_produtos.prd_prazo_fornecedor, 0), b2c_forfor.prazo) AS "prazo_fornecedor",
+ MAX(b2c_tratra.prazo_transportadora)
+ OVER (
+   PARTITION BY b2c_tratra.id_regreg )                                         AS "prazo_transportador",
+ zt2.codigo_ocr2                                                               AS "cod_ocr_abertos"
+FROM
+ (SELECT
+    itempedido.pedido,
+    itempedido.sku,
+    itempedido.filial,
+    itempedido.data,
+    itempedido.status,
+    itempedido.is_entrega_imediata,
+    itempedido.referencia,
+    itempedido.produto,
+    itempedido.quantidade,
+    itempedido.volumes,
+    itempedido.ordem_compra,
+    itempedido.polo,
+    itempedido.fornecedor_marca,
+    itempedido.nota_fiscal,
+    itempedido.prd_valor_real_pago,
+    itempedido.prd_frete_real_pago,
+    itempedido.fornecedor_id
+  FROM itempedido
+  WHERE itempedido.data :: DATE >= ''2017-08-01''
+       AND itempedido.item_status <> ''Cancelado''
+ ) AS itempedido
+ LEFT JOIN pedido AS ped
+   ON ped.pedido = itempedido.pedido
+ LEFT JOIN exsl
+   ON itempedido.sku = exsl.cd_item
+ LEFT JOIN kit
+   ON itempedido.referencia = kit.father
+ INNER JOIN pedido_data
+   ON pedido_data.pedido = itempedido.pedido
+ INNER JOIN itempedido_data
+   ON itempedido.pedido = itempedido_data.pedido AND itempedido.sku = itempedido_data.sku
+ LEFT JOIN oc
+   ON oc.oc = itempedido.ordem_compra AND oc.itemcode = COALESCE(kit.code, itempedido.referencia)
+ LEFT JOIN financeiro.fluxo_caixa
+   ON fluxo_caixa.docsap = ''Ordem de Compra'' AND fluxo_caixa.nf = itempedido.ordem_compra
+ INNER JOIN sap.oitm item
+   ON itempedido.referencia = item.itemcode
+ INNER JOIN sap.ocrd
+   ON ocrd.cardcode = item.cardcode
+ LEFT JOIN jira.customfields
+   ON customfields.pedido_venda = concat(itempedido.pedido, ''.0'') AND customfields.issue_key LIKE (''%CANCELA%'') AND
+      customfields.produto LIKE CONCAT(CONCAT(''%'', itempedido.sku), ''%'')
+ LEFT JOIN nfs
+   ON nfs.pedidos = itempedido.pedido AND nfs.notas = itempedido.nota_fiscal
+ INNER JOIN adm.b2c_pedprd
+   ON itempedido.pedido = b2c_pedprd.id_pedped AND itempedido.sku = b2c_pedprd.id_prdprd
+      AND (b2c_pedprd.empresa_emissora = ''SBOLojasKD'' OR b2c_pedprd.empresa_emissora IS NULL OR
+           b2c_pedprd.empresa_emissora = '''')
+ LEFT JOIN etc.parceiros_acl industry
+   ON industry.pn_sap = item.cardcode AND industry.tipo IN
+                                          (''industry'', ''marketplace_industry'', ''marketplace_industry_lojaskd'', ''marketplace_offline'')
+      AND industry.pn_sap <> ''''
+ LEFT JOIN etc.parceiros_acl shipper
+   ON shipper.pn_sap = nfs.codigotransportadors AND shipper.tipo = ''shipper'' AND shipper.pn_sap <> ''''
+ LEFT JOIN etc.parceiros_acl fob
+   ON fob.pn_sap = oc.transportador_oc AND fob.tipo = ''fob''
+ LEFT JOIN etc.parceiros_acl hub
+   ON hub.pn_sap = nfs.hubs
+ LEFT JOIN etc.marketplace_offline
+   ON marketplace_offline.pedido = itempedido.pedido AND marketplace_offline.ref = itempedido.sku
+ LEFT JOIN zt
+   ON zt.numero_pedido = itempedido.pedido AND
+      (zt.ordem_compra = itempedido.ordem_compra OR zt.nf = itempedido.nota_fiscal)
+ LEFT JOIN zt2
+   ON zt2.numero_pedido = itempedido.pedido AND zt2.row = 1
+ LEFT JOIN retfollow
+   ON itempedido.pedido = retfollow.order_id AND itempedido.sku = retfollow.sku AND retfollow.row = 1
+ LEFT JOIN adm.b2c_tratra
+   ON ped.regiao_id = b2c_tratra.id_regreg
+ LEFT JOIN adm.b2c_view_produtos
+   ON itempedido.sku = b2c_view_produtos.id
+ LEFT JOIN adm.b2c_forfor
+   ON itempedido.fornecedor_id = b2c_forfor.id
+ LEFT JOIN tmargem
+   ON itempedido.pedido = tmargem.pedido AND itempedido.sku = tmargem.sku
+ LEFT JOIN docnfe
+   ON itempedido.ordem_compra = docnfe.purchase_order
+WHERE itempedido_data.entrega_realizado IS NULL
+     AND ped.fase <> ''Cancelado''
+     AND ped.fase <> ''Novo''
+     AND ped.fase <> ''Em Aprovação''
+     AND customfields.issue_key IS NULL
+     AND zt.codigo_ocr2 IS NULL;')
+TO 's3://redshift.lojaskd.com.br/temp/ORACULO_LOJASKD.csv'
+CREDENTIALS 'aws_access_key_id=AKIAIEYENQSGC2JFNWNA;aws_secret_access_key=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'
+ALLOWOVERWRITE
+GZIP
+ADDQUOTES
+
+
+
