@@ -1,4 +1,4 @@
-Fatos:
+Fatos Pedido:
 
 	Gatilho
 		Gatilho =  []
@@ -16,4 +16,14 @@ Fatos:
 		Prazo Original
 		Novo Prazo
 		Prazo Previsto
+
+Fatos Logistica:
+
+	Transportadora
+	Região
+	Peso
+	Quantidade
+
+
+
 

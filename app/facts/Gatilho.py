@@ -1,6 +1,9 @@
 from pyknow import *
 
-# DEFINICAO DE FATO
-class Usuario(Fact):
+class Gatilho(Fact):
+
+    def get_qtd(self):
+        self.quantidade = 2999
+
     """Info about the traffic light."""
     pass

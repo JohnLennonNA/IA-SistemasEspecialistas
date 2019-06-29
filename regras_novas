@@ -15,3 +15,4 @@ Ver:
 8- se o caminhão escolhido pela transportadora não couber todos os volumes a serem coletados na indústria, transportadora deverá lançar ocorrência de atraso
 [07:44, 6/15/2019] Lana: 9- se o CTE de coleta tiver data de criação menor que a data de expedição da indústria, considerar data de expedição para calcular o prazo de coleta
 
+FAZER UM MOTOR DE INFERÊNCIA PRA DEFINIR QUAL BASE DE CONHECIMENTO VAI ASSIM JA ADICIONA MAIS CONDIÇÕES
