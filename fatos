@@ -1,8 +1,19 @@
 Fatos:
 
-	Gatilho =  pegar depois
-	Tipo de Venda = [Loja, Troca, Assistencia] ver marketplace
-	Fase do Item = [Supply, Financeiro, Operação Fiscal, Porta a Porta, Fob, HUB]
-	Atraso em dias uteis = d.u
-	Prazo Original
-	Novo Prazo
+	Gatilho
+		Gatilho =  []
+
+	TipoVenda
+		Tipo de Venda = [Loja, Troca, Assistencia] ver marketplace
+	
+	FaseItem
+		Fase do Item = [Supply, Financeiro, Operação Fiscal, Porta a Porta, Fob, HUB]
+
+	AtrasoDiasUteis
+		Atraso em dias uteis = d.u
+	
+	Prazo
+		Prazo Original
+		Novo Prazo
+		Prazo Previsto
+
