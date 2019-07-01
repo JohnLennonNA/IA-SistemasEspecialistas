@@ -1,5 +1,6 @@
 from pyknow import *
-from facts.Gatilho import Gatilho
+from ..facts.Gatilho import Gatilho
+
 
 class Logistica(KnowledgeEngine):
     @Rule(Gatilho(perfil='Sofisticado'), Gatilho(fome='Pouca'), Gatilho(horario='Jantar'))

@@ -1,12 +1,11 @@
-from pyknow import *
-from facts.Gatilho import Gatilho
-from know_engine.Logistica import Logistica
+from app.facts.Gatilho import Gatilho
+from app.know_engine.Logistica import Logistica
 
-motor = Logistica()
-motor.reset()
+mt_log = Logistica()
+mt_log.reset()
 
-motor.declare(Gatilho(perfil='Natureba'))
-motor.declare(Gatilho(fome='Faminto'))
-motor.declare(Gatilho(horario='Almoço'))
+mt_log.declare(Gatilho(perfil='Natureba'))
+mt_log.declare(Gatilho(fome='Faminto'))
+mt_log.declare(Gatilho(horario='Almoço'))
 
-motor.run()
+mt_log.run()
