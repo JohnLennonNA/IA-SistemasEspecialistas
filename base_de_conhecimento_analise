@@ -26,7 +26,8 @@ Tipo de Venda=Loja;OU(
 Fase do Item=Supply;
 Fase do Item=Financeiro);
 Atraso em D.U<20;
-Gatilho=-2d.u. Novo Prazo);"AT215";
+Gatilho=-2d.u. Novo Prazo);
+"AT215";
 
 4--SE(E(
 Tipo de Venda=Loja;OU(
@@ -35,7 +36,9 @@ Fase do Item=Financeiro);E(
 Atraso em D.U>20;
 Atraso em D.U<40);OU(
 Gatilho=-2d.u 
-Prazo Original;Gatilho=Prev.Embarque));"AT225";
+Prazo Original;
+Gatilho=Prev.Embarque));
+"AT225";
 
 5--SE(E(
 Tipo de Venda=Loja;OU(
@@ -49,7 +52,8 @@ Fase do Item=Operação Fiscal;
 Fase do Item=Porta a Porta;
 Fase do Item=Fob;
 Fase do Item=Hub);
-Gatilho=-2d.u. Novo Prazo);"AT210";
+Gatilho=-2d.u. Novo Prazo);
+"AT210";
 
 7--SE(E(
 Tipo de Venda=Loja;OU(
