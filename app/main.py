@@ -7,6 +7,7 @@ mt_ped.reset()
 mt_ped.declare(Produto(tipo_de_venda='Troca'))
 mt_ped.declare(Produto(fase_do_item='Supply'))
 mt_ped.declare(Produto(atrasoDU=42))
+mt_ped.declare(Produto(gatilho='-2d.u. Novo Prazo'))
 
 mt_ped.run()
 
