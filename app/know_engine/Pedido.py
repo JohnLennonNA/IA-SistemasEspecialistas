@@ -1,5 +1,5 @@
 from pyknow import *
-from ..facts.Produto import Produto
+from app.facts.Produto import Produto
 
 
 class Pedido(KnowledgeEngine):

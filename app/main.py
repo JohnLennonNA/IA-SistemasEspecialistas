@@ -1,5 +1,4 @@
 from app.facts.Produto import Produto
-from app.know_engine.Logistica import Logistica
 from app.know_engine.Pedido import Pedido
 
 mt_ped = Pedido()
