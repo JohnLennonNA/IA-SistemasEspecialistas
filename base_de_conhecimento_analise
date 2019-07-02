@@ -61,82 +61,95 @@ Fase do Item=Operação Fiscal;
 Fase do Item=Porta a Porta;
 Fase do Item=Fob;
 Fase do Item=Hub);
-Gatilho=-2d.u Prazo Original);"AT200";
+Gatilho=-2d.u Prazo Original);
+"AT200";
 
 8--SE(E(
 Tipo de Venda=Loja;OU(
 Fase do Item=Operação Fiscal;
 Fase do Item=Fob);
-Gatilho=Prev.Embarque);"AT205";
+Gatilho=Prev.Embarque);
+"AT205";
 
 9--SE(E(
 Tipo de Venda=Troca;OU(
 Fase do Item=Supply;Fase do Item=Financeiro);
-Gatilho=-2d.u. Novo Prazo);"AT240";
+Gatilho=-2d.u. Novo Prazo);
+"AT240";
 
 10--SE(E(
 Tipo de Venda=Troca;OU(
 Fase do Item=Supply;
-Fase do Item=Financeiro));"AT235";
+Fase do Item=Financeiro));
+"AT235";
 
-11--SE(E(
+11--E--13 SE(E(
 Tipo de Venda=Troca;OU(
 Fase do Item=Operação Fiscal;
 Fase do Item=Fob);
-Gatilho=-2d.u. Novo Prazo);"AT220";
+Gatilho=-2d.u. Novo Prazo);
+"AT220";
 
 12--SE(E(
 Tipo de Venda=Troca;OU(
 Fase do Item=Operação Fiscal;
 Fase do Item=Fob);OU(
 Gatilho=-2d.u Prazo Original;
-Gatilho=Prev.Embarque));"AT210";
+Gatilho=Prev.Embarque));
+"AT210";
 
-13--SE(E(
+13-- JUNTOU COM A 11
+SE(E(
 Tipo de Venda=Troca;OU(
-Fase do Item=Porta a Porta;Fase do Item=Hub);Gatilho=-2d.u. Novo Prazo);"AT220";
+Fase do Item=Porta a Porta;Fase do Item=Hub);Gatilho=-2d.u. Novo Prazo);
+"AT220";
 
 14--SE(E(
 Tipo de Venda=Troca;OU(
 Fase do Item=Porta a Porta;
 Fase do Item=Hub);
-Gatilho=-2d.u Prazo Original);"AT200";
+Gatilho=-2d.u Prazo Original);
+"AT200";
 
 15--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Financeiro;
 Fase do Item=Supply);
-Gatilho=-2d.u. Novo Prazo);"AT240";
+Gatilho=-2d.u. Novo Prazo);
+"AT240";
 
 16--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Supply;
 Fase do Item=Financeiro);
-Gatilho=-2d.u Prazo Original);"AT235";
+Gatilho=-2d.u Prazo Original);
+"AT235";
 
 17--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Financeiro;
 Fase do Item=Supply);
-Gatilho=Prev.Embarque);"AT230";
-
-
+Gatilho=Prev.Embarque);
+"AT230";
 
 18--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Fob;
 Fase do Item=Operação Fiscal);
-Gatilho=-2d.u. Novo Prazo);"AT220";
+Gatilho=-2d.u. Novo Prazo);
+"AT220";
 
 19--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Operação Fiscal;
-Fase do Item=Fob));"AT210";
+Fase do Item=Fob));
+"AT210";
 
 20--SE(E(
 Tipo de Venda=Assistencia;OU(
 Fase do Item=Porta a Porta;
-Fase do Item=Hub));"AT200";""))))))))))))))))))))))
+Fase do Item=Hub));
+"AT200"
 
 -- SQL PARA ANALISE DE NOVAS REGRAS
 
