@@ -151,6 +151,85 @@ Fase do Item=Porta a Porta;
 Fase do Item=Hub));
 "AT200"
 
+
+REGRAS NOVAS 4/07 ==============================
+
+Logistica
+
+SE Evento(name="Extravio") and Ocorrencia(status) != "novo" AND Ocorrencia(status) != "fechada"
+	print("não permitir abrir ocorrência de atraso")
+
+SE Ocorrencia(data) < Cliente(data_prevista)
+	print("não abrir at ou abrir como indevida , sem notificar o cliente")
+
+SE ColetaTranportadora = "fornecedor"
+	print("recalcular o prazo de entrega do produto")
+
+SE Evento(name="ProdutoDisponivelColeta") AND (Armazem(qtd_produtos="100") AND Armazem(peso_produtos < "1000") )
+	print("Definir transportadora Y para coletar os produtos")
+
+SE Evento(name="ProdutoDisponivelColeta") AND (Armazem(qtd_produtos="100") AND Armazem(peso_produtos > "1000") AND Armazem(peso_produtos < "4000") )
+	print("Definir transportadora X para coletar os produtos")
+
+SE Evento(name="ProdutoDisponivelColeta") AND Armazem(peso_produtos > "4000"))
+	print("Solicita coleta na indústria da transportadora de coleta FOB")
+
+SE Evento(name="FaturamentoNota") AND (Transportadora(valor_divida>"40000") AND Transportadora(valor_divida<"80000"))
+	print("Bloquear faturamento de nota")
+
+SE Evento(name="FaturamentoNota") AND (Transportadora(valor_divida > "80000"))
+	print("solicitar reunião com o gerente da transportadora")
+
+SE Evento(name="SolicitacaoColetaFornecedor")
+	print("Enviar Notfis para transportadora")
+
+SE Evento(name="EmissaoCTE")
+	print("Recalcular Prazo de entrega para os produtos")
+
+SE Evento(name="DivergenciaProduto") AND Produto(entrega="ForaDoPrazo")
+	print("Cria uma indenização contra a transportadora devido atraso na entrega")
+
+
+SE Evento(name="CriacaoOcorrencia") AND Cliente(qtd_cocrrencias="4")
+	print("Bloqueio de criação de ocorrencias")
+	print("Abertura de Extravio")
+
+SE Evento(name="AgendamentoColeta") AND Cliente(qtd_cocrrencias="4")
+	print("Bloqueio de criação de ocorrencias")
+	print("Abertura de Extravio")
+
+
+
+
+Produtos
+
+SE Evento(name="ProdutoRecebidoCd") AND DataEntrega = 2d.u:
+	print("Solicita prioridade no embarque")
+
+SE Evento(name="ChecagemProdutoCd") AND Evento(name="DataArmazenamento") > 2d.u:
+	print("Solicitar embarque urgente")
+
+SE Evento(name="ChecagemProdutoCd") AND Produto(dataArmazenamento) > 10 d.u:
+	print("Abrir extravio contra o cd para tratar cancelamento junto ao cliente")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- SQL PARA ANALISE DE NOVAS REGRAS
 
 UNLOAD ('WITH oc AS (
