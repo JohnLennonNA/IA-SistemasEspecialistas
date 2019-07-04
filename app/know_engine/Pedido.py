@@ -24,7 +24,7 @@ class Pedido(KnowledgeEngine):
     # Regra 3
     @Rule(Produto(tipo_de_venda='Loja'),
           OR(Produto(fase_do_item='Supply'), Produto(fase_do_item='Financeiro')),
-          Produto(atrasoDU=P(lambda atrasoDU: atrasoDU < 20)),
+          Produto(atrasoDU=P(lambda atrasoDU: atrasoDU < 20) & P(lambda atrasoDU: atrasoDU > 0)),
           Produto(gatilho='-2du Novo Prazo'))
     def at215rg3(self):
         print('AT215 - Regra 3')
@@ -40,7 +40,8 @@ class Pedido(KnowledgeEngine):
     # Regra 5
     @Rule(Produto(tipo_de_venda='Loja'),
           OR(Produto(fase_do_item='Supply'), Produto(fase_do_item='Financeiro')),
-          Produto(atrasoDU=P(lambda atrasoDU: atrasoDU < 20)))
+          Produto(atrasoDU=P(lambda atrasoDU: atrasoDU < 20) & P(lambda atrasoDU: atrasoDU > 0)),
+          NOT(Produto(gatilho=W())))
     def at205rg5(self):
         print('AT205 - Regra 5')
 
@@ -77,7 +78,8 @@ class Pedido(KnowledgeEngine):
 
     # Regra 10
     @Rule(Produto(tipo_de_venda='Troca'),
-          OR(Produto(fase_do_item='Supply'), Produto(fase_do_item='Financeiro')))
+          OR(Produto(fase_do_item='Supply'), Produto(fase_do_item='Financeiro')),
+          NOT(Produto(gatilho=W())))
     def at235rg10(self):
         print('AT235 - Regra 10')
 
