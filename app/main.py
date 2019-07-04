@@ -24,7 +24,7 @@ for index, row in pedidos.iterrows():
     mt_ped.declare(Produto(fase_do_item=row['Fase do Item']))
     if atraso > 0:
         mt_ped.declare(Produto(atrasoDU=atraso))
-    mt_ped.declare(Produto(gatilho='-2d.u. Novo Prazo'))
+#    mt_ped.declare(Produto(gatilho='-2d.u. Novo Prazo'))
     mt_ped.run()
 
 
