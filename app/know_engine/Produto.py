@@ -1,5 +1,6 @@
 from pyknow import *
 from app.facts.Produto import Produto
+from app.facts.Produto import Evento
 
 
 class Produto(KnowledgeEngine):

@@ -7,25 +7,6 @@ from app.facts.Produto import Produto
 from app.facts.Transportadora import Transportadora
 from app.facts.Armazem import Armazem
 
-def status(args):
-    pass
-
-def data(args):
-    pass
-
-
-def data_prevista(args):
-    pass
-
-
-def peso_produtos(args):
-    pass
-
-
-def valor_divida(args):
-    pass
-
-
 class Logistica(KnowledgeEngine):
 
     # Regra 1
