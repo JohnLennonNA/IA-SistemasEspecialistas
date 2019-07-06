@@ -1,4 +1,4 @@
 ﻿Nr Pedido;Cod Prd;Desc Prod;Larg;Alt;Prof;Peso;Tipo de Venda;Fase do Item;Data Compra;Data Prevista Entrega;Data Entrega;NomeEvento;
-1;1;Trigo ;10;20;5;1;Loja;Supply;2019-07-01;2019-07-03;
-2;2;Leite;10;20;5;1;Loja;Financeiro;2019-06-15;2019-07-01;
-3;3;Açucar;10;20;5;1;Loja;Financeiro;2019-07-03;2019-07-10;
+1;1;Trigo ;10;20;5;1;Loja;Supply;2019-07-01;2019-07-03;Extravio;
+2;2;Leite;10;20;5;1;Loja;Financeiro;2019-06-15;2019-07-01;Extravio;
+3;3;Açucar;10;20;5;1;Loja;Financeiro;2019-07-03;2019-07-10;Extravio;
