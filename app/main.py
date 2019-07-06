@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import date
-from app.facts.Produto import Produto
-from app.know_engine.Pedido import Pedido
+from app.facts.Produto import Produto as ProductFact
+from app.know_engine.Pedido import Produto
 
 # Carrega a base
 pedidos = pd.read_csv('ListaPedidos.csv', sep=';')
@@ -9,7 +9,7 @@ pedidos = pd.read_csv('ListaPedidos.csv', sep=';')
 #Nomes das Colunas
 print(pedidos.columns)
 
-mt_ped = Pedido()
+mt_ped = Produto()
 
 for index, row in pedidos.iterrows():
     # Calculo atraso do pedido
@@ -20,10 +20,10 @@ for index, row in pedidos.iterrows():
     print(row['Desc Prod'], 'Atraso:', atraso)
 
     mt_ped.reset()
-    mt_ped.declare(Produto(tipo_de_venda=row['Tipo de Venda']))
-    mt_ped.declare(Produto(fase_do_item=row['Fase do Item']))
+    mt_ped.declare(ProductFact(tipo_de_venda=row['Tipo de Venda']))
+    mt_ped.declare(ProductFact(fase_do_item=row['Fase do Item']))
     if atraso > 0:
-        mt_ped.declare(Produto(atrasoDU=atraso))
+        mt_ped.declare(ProductFact(atrasoDU=atraso))
 #    mt_ped.declare(Produto(gatilho='-2d.u. Novo Prazo'))
     mt_ped.run()
 
